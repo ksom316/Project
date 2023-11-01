@@ -82,6 +82,7 @@ class WeekPlanner:
             if password_ver == password:
                 print(f"\nWelcome, {name}!")
                 self.user_details[name] = password
+                self.save_details()
                 self.result = name  # Set the current user
                 break
             else:
@@ -106,7 +107,7 @@ class WeekPlanner:
                 print("You entered a wrong password. ")
 
     def welcome(self):
-        print("Week planner \n1. Log in \n2. Sign up ")
+        print("-----WEEK PLANNER----- \n1. Log in \n2. Sign up ")
         while True:
             option = input("Option: ")
 
@@ -117,54 +118,146 @@ class WeekPlanner:
                 elif option == "2":
                     self.sign_up()
                     break
+                else:
+                    print("Please enter 1 or 2")
             else:
                 print("Please enter the corresponding number.")
-
+    def view_day(self):
+      while True:
+       print("What day's plan will you like to view?")
+       option = input("Option: ")
+       if option.isdigit() and int(option)<8 and int(option)>0:
+          try: 
+           print(self.user_plans[self.result][int(option)-1][f"Day[{option}]"])
+           break
+          except:
+           print(f"Sorry you have no plan for Day[{option}]")
+           break
+       else:
+           print("Enter a valid day number.\n")
+    def today(self):
+        try:
+            plan = self.user_plans[self.result][(datetime.datetime.today().isoweekday())-1][f"Day[{(datetime.datetime.today().isoweekday())}]"]
+            if plan == "":
+                print("Sorry. You have no plan for today")
+            else:
+                print(plan)
+        except:
+            print("Sorry. You have no plan for today. ")
+        
     def fill(self, day_num):
         while True:
             num = input(f"How many things do you want to do on Day[{day_num}]: ")
             if num.isdigit():
+                num = int(num)
                 break
             else:
                 print("Invalid number. ", end="")
 
         i = 0
-        self.day[day_num - 1] = {f"Day[{day_num}]": "/  "}
-        while i < int(num):
-            i += 1
+        if num>0:
+            self.day[int(day_num) - 1] = {f"Day[{day_num}]":""}
+
+        for i in range(1, num + 1):
             start_str = input(f"Enter a starting time for activity[{i}] (format: HH:MM): ")
             stop_str = input(f"Enter an ending time for activity[{i}] (format: HH:MM): ")
             activity = input(f"Input activity[{i}]: ")
 
             try:
-                start = datetime.strptime(start_str, "%H:%M")
-                stop = datetime.strptime(stop_str, "%H:%M")
+                start = datetime.datetime.strptime(start_str, "%H:%M")
+                stop = datetime.datetime.strptime(stop_str, "%H:%M")
             except ValueError:
                 print("Invalid time format. Please use HH:MM format.")
                 continue
 
-            self.day[day_num - 1][f"Day[{day_num}]"] += f"{start.strftime('%H:%M')} - {stop.strftime('%H:%M')} : {activity}\n"
+            self.day[int(day_num) - 1][f"Day[{day_num}]"] += f"{start.strftime('%H:%M')} - {stop.strftime('%H:%M')} :{activity}\n"
 
 
     def view_weekplan(self):
         try:
             for plan in self.user_plans[self.result]:
                 for key, value in plan.items():
-                    print(f"{key}: \n {value}", "\n\n")
+                    print(f"{key}: \n {value}", "\n")
         except:
             print("Sorry, you have no week plan.")
 
     def change_daily_plan(self):
+        # self.back()
         while True:
-            day_num =(input("What day's plan would you like to change: "))
+            day_num =(input("What day would you like to create a plan for : "))
             if day_num.isdigit() and int(day_num)>0 and int(day_num)<8:
                 self.fill(day_num)
                 return self.day
             else:
                 print("Please enter the corresponding day number.")
-        
+    def load(self):
+            try:
+                with open('User_details.dat', 'rb') as file:
+                    self.user_details = pickle.load(file)
+            except:
+                pass
 
+            try:
+                with open('User_plans.dat', 'rb') as file:
+                    self.user_plans = pickle.load(file)
+            except:
+                pass
+
+            try:
+                with open('suggestions.dat', 'rb') as file:
+                    self.u_suggestions = pickle.load(file)
+            except:
+                pass 
+    def options(self):
+            while self.result:
+                print("\nWhat would you like to do? \n1. Create a week plan \n2. Create a plan for a specific day \n3. Change week plan \n4. View week plan \n5. View suggestion \n6. View today's plan \n7. View a specific day's plan \n8. Delete account \n9. Exit")
+                option = input("Option: ")
+                if option.isdigit():
+                    if option == "1":
+                        self.user_plans[self.result] = ''
+                        if len(self.user_plans[self.result]) == 0:
+                            self.user_plans[self.result] = self.create_weekplan()
+                            self.save_plans()
+                    elif option == "2":
+                        self.user_plans[self.result] = self.change_daily_plan()
+                        self.save_plans()
+                    elif option == "3":
+                        self.user_plans[self.result] = self.change_weekplan()
+                        self.save_plans()
+                    elif option == "4":
+                        self.view_weekplan()
+                    elif option == "5":
+                        self.suggestions()
+                        self.save_suggestions()
+                    elif option == "6":
+                        self.today()
+                    elif option == "7":
+                        self.view_day()
+                    elif option == "8":
+                        self.delete()
+                        self.save_details()
+                        self.save_plans()
+                        self.save_suggestions()
+                        self.result = None  
+                    elif option == "9":
+                        self.save_details()
+                        self.save_plans()
+                        self.save_suggestions()
+                        self.result = None         
+            return self  
+    def back(self):
+     while True:
+        print("Press 0 to go back and 1 to continue")
+        choice = input("Option: ")
+        if choice == "1":
+            break
+        elif choice == "0":
+           self.options() 
+        else:
+            print("Enter a valid number. ")
+            
     def create_weekplan(self):
+        # self.back()
         for day_num in range(1, 8):
             self.fill(day_num)
         return self.day
@@ -181,28 +274,33 @@ class WeekPlanner:
                 except:
                     pass
                 self.result = None
+                print("Account successfully deleted")
                 break
             elif option == "2":
                 break
             else:
                 print("Please enter the corresponding number: ")
 
-        print("Account successfully deleted")
+        
 
     def change_weekplan(self):
+        # self.back()
         for day_num in range(1, 8):
-            if not self.user_plans[self.result]:
-                self.fill(day_num)
-            else:
-                print(f"Do you want to overwrite the current plan for Day[{day_num}] \n1. Yes \n2. No ")
+            if self.user_plans[self.result][day_num-1]:
+                print(f"Plan for Day {day_num} already exists: ")
+                for plan in self.user_plans[self.result]:
+                 for key, value in plan.items():
+                    print(f"{key}: \n {value}", "\n")
+                print("Do you want to overwrite this plan? \n1. Yes \n2. No")
                 option = input("Option: ")
-                while option not in ("1", "2"):
-                    print("Invalid option.")
-                    option = input("Option: ")
                 if option == "1":
                     self.fill(day_num)
-        return self.day
-
+                elif option == "2":
+                    print(f"Keeping the existing plan for Day {day_num}.")
+            else:
+                self.fill(day_num)
+        self.save_plans()
+           
     def suggestions(self):
         try:
             for plan in self.u_suggestions[self.result]:
@@ -238,55 +336,14 @@ class WeekPlanner:
                     if option == "1":
                         self.user_plans[self.result] = suggestion
                         print("Week plan successfully changed")
-
+    
+        
     def run(self):
-        try:
-            with open('User_details.dat', 'rb') as file:
-                self.user_details = pickle.load(file)
-        except:
-            pass
-
-        try:
-            with open('User_plans.dat', 'rb') as file:
-                self.user_plans = pickle.load(file)
-        except:
-            pass
-
-        try:
-            with open('suggestions.dat', 'rb') as file:
-                self.u_suggestions = pickle.load(file)
-        except:
-            pass
-
+        self.load()
         self.welcome()
-
-        while self.result:
-            print("\nWhat would you like to do? \n1. Create a week plan \n2. Create a plan for a specific day \n3. Change week plan \n4. View week plan \n5. View suggestion \n6. Delete Account \n7. Log out")
-            option = input("Option: ")
-            if option.isdigit():
-                if option == "1":
-                    self.user_plans[self.result] = ''
-                    if len(self.user_plans[self.result]) == 0:
-                        self.user_plans[self.result] = self.create_weekplan()
-                        self.save_plans()
-                elif option == "2":
-                    self.user_plans[self.result] = self.change_daily_plan()
-                    self.save_plans()
-                elif option == "3":
-                    self.user_plans[self.result] = self.change_weekplan()
-                    self.save_plans()
-                elif option == "4":
-                    self.view_weekplan()
-                elif option == "5":
-                    self.suggestions()
-                    self.save_suggestions()
-                elif option == "6":
-                    self.delete()
-                elif option == "7":
-                    self.save_details()
-                    self.save_plans()
-                    self.save_suggestions()
-                    self.result = None
+        
+        self.options()
+        return self
 
 if __name__ == "__main__":
     week_planner = WeekPlanner()
