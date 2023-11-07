@@ -372,11 +372,13 @@ class WeekPlanner:
 
                     if option == "1":
                         self.user_plans[self.result] = suggestion
-                    for i in range (100):
-                     self.loading(i+1, 100)
-                     time.sleep(0.01)
-                    print("")
-                    print("Week plan successfully changed")
+                        for i in range (100):
+                          self.loading(i+1, 100)
+                          time.sleep(0.01)
+                          print("")
+                          print("Week plan successfully changed")
+                    elif option == "2":
+                        pass
 # USER OPTIONS
     def options(self):
             while self.result:
@@ -417,9 +419,9 @@ class WeekPlanner:
                         self.save_suggestions()
                         self.result = None      
                     else:
-                        print("Enter a valid number. ")
+                        print("Enter a number that corresponds to one of the options. ")
                 else: 
-                    print("Enter a valid number. ")
+                    print("Please enter a number. ")
             self.exit()   
             return self  
 # FUNCTION FOR RUNNING THE PROGRAM 
